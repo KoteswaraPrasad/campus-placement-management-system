@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Participating Companies - Campus Placement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1">Corporate Recruiting Partners</h2>
+      <p class="text-muted mb-0">Explore organizations recruiting from our university campus.</p>
+    </div>
+    {% if user.is_officer %}
+      <a href="{% url 'companies:create' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+        <i class="bi bi-building-add me-1"></i> Add Partner Company
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Search & Filter -->
+  <div class="card card-custom mb-4">
+    <div class="card-body p-3">
+      <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-{% if user.is_officer %}7{% else %}10{% endif %}">
+          <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search company name, industry, or location...">
+        </div>
+        {% if user.is_officer %}
+          <div class="col-md-3">
+            <select name="status" class="form-select">
+              <option value="">All Companies</option>
+              <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active Companies Only</option>
+              <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive / Deactivated</option>
+            </select>
+          </div>
+        {% endif %}
+        <div class="col-md-2 d-flex gap-1">
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search me-1"></i> Search</button>
+          <a href="{% url 'companies:list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Companies Grid -->
+  <div class="row g-4 mb-4">
+    {% for company in page_obj %}
+      <div class="col-md-6 col-lg-4">
+        <div class="card card-custom h-100 d-flex flex-column">
+          <div class="card-body p-4 d-flex flex-column">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+              <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 fw-bold fs-4 d-flex align-items-center justify-content-center" style="width: 54px; height: 54px;">
+                {{ company.name|first }}
+              </div>
+              <div>
+                {% if company.is_active %}
+                  <span class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                {% else %}
+                  <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Inactive</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <h5 class="fw-bold mb-1 text-dark">{{ company.name }}</h5>
+            <div class="text-muted small mb-3"><i class="bi bi-tag me-1"></i> {{ company.industry }}</div>
+            <p class="text-muted small flex-grow-1">{{ company.description|truncatewords:20 }}</p>
+
+            <div class="border-top pt-3 mt-auto">
+              <div class="d-flex justify-content-between align-items-center small text-muted mb-2">
+                <span><i class="bi bi-geo-alt me-1"></i> {{ company.locations|truncatechars:22 }}</span>
+                <span class="badge bg-primary-subtle text-primary">{{ company.total_jobs }} Opening{{ company.total_jobs|pluralize }}</span>
+              </div>
+              <a href="{% url 'companies:detail' company.id %}" class="btn btn-outline-primary btn-sm w-100">
+                View Company Profile
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="bi bi-buildings empty-state-icon"></i>
+          <h5>No companies found</h5>
+          <p class="text-muted small">No corporate partners match the selected filter criteria.</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <nav class="d-flex justify-content-center">
+      <ul class="pagination pagination-sm">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">&laquo;</a></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ num }}</a>
+          </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}">&raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

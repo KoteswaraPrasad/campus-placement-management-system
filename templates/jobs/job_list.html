@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Placement Opportunities - Campus Placement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1">Campus Job Openings</h2>
+      <p class="text-muted mb-0">Browse corporate recruiting opportunities and check your eligibility.</p>
+    </div>
+    {% if user.is_officer %}
+      <a href="{% url 'jobs:create' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i> Post New Job Opening
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="card card-custom mb-4">
+    <div class="card-body p-3">
+      <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-4">
+          <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search title, company, skill...">
+        </div>
+        <div class="col-md-2">
+          <select name="job_type" class="form-select">
+            <option value="">All Job Types</option>
+            {% for code, label in job_types %}
+              <option value="{{ code }}" {% if selected_job_type == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <input type="text" name="location" value="{{ selected_location }}" class="form-control" placeholder="Location...">
+        </div>
+
+        {% if user.is_officer %}
+          <div class="col-md-2">
+            <select name="status" class="form-select">
+              <option value="">All Statuses</option>
+              <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+              <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
+              <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>Closed</option>
+            </select>
+          </div>
+        {% elif user.is_student %}
+          <div class="col-md-2">
+            <div class="form-check pt-2">
+              <input class="form-check-input" type="checkbox" name="eligible_only" value="1" id="eligibleCheck" {% if eligible_only %}checked{% endif %} onchange="this.form.submit()">
+              <label class="form-check-label fw-semibold small text-success" for="eligibleCheck">
+                Eligible Only
+              </label>
+            </div>
+          </div>
+        {% endif %}
+
+        <div class="col-md-2 d-flex gap-1">
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i> Filter</button>
+          <a href="{% url 'jobs:list' %}" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Job Cards Grid -->
+  <div class="row g-4 mb-4">
+    {% for job in page_obj %}
+      <div class="col-md-6 col-lg-4">
+        <div class="job-card p-4">
+          <!-- Top Row: Company & Status Badge -->
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <span class="badge bg-light text-primary border fw-semibold">{{ job.company.name }}</span>
+            {% if user.is_student %}
+              {% if job.user_has_applied %}
+                <span class="badge bg-primary text-white"><i class="bi bi-check2"></i> Applied</span>
+              {% elif job.user_is_eligible %}
+                <span class="badge bg-success text-white"><i class="bi bi-check-circle"></i> Eligible</span>
+              {% else %}
+                <span class="badge bg-danger-subtle text-danger"><i class="bi bi-x-circle"></i> Ineligible</span>
+              {% endif %}
+            {% elif user.is_officer %}
+              <span class="badge {% if job.status == 'published' %}bg-success{% elif job.status == 'draft' %}bg-secondary{% else %}bg-danger{% endif %}">
+                {{ job.status|title }}
+              </span>
+            {% endif %}
+          </div>
+
+          <!-- Job Title -->
+          <h5 class="fw-bold mb-2">
+            <a href="{% url 'jobs:detail' job.id %}" class="text-decoration-none text-dark">{{ job.title }}</a>
+          </h5>
+
+          <!-- Metadata Tags -->
+          <div class="d-flex flex-wrap gap-2 mb-3 small text-muted">
+            <span><i class="bi bi-geo-alt"></i> {{ job.location }}</span>
+            <span>&bull;</span>
+            <span><i class="bi bi-briefcase"></i> {{ job.job_type }}</span>
+            <span>&bull;</span>
+            <span class="text-success fw-bold">{{ job.salary_package }}</span>
+          </div>
+
+          <!-- Criteria snippet -->
+          <div class="p-2 bg-light rounded-2 mb-3 small text-muted">
+            <div class="d-flex justify-content-between">
+              <span>Min CGPA: <strong>{{ job.min_cgpa }}</strong></span>
+              <span>Max Backlogs: <strong>{{ job.max_backlogs }}</strong></span>
+            </div>
+            <div class="text-truncate mt-1">Branches: {{ job.eligible_departments }}</div>
+          </div>
+
+          <!-- Skills tags -->
+          <div class="mb-3 d-flex flex-wrap gap-1">
+            {% for skill in job.skills_list|slice:":3" %}
+              <span class="badge bg-white text-secondary border" style="font-size: 0.72rem;">{{ skill }}</span>
+            {% endfor %}
+            {% if job.skills_list|length > 3 %}
+              <span class="badge bg-white text-muted border" style="font-size: 0.72rem;">+{{ job.skills_list|length|add:"-3" }} more</span>
+            {% endif %}
+          </div>
+
+          <!-- Card Footer -->
+          <div class="border-top pt-3 mt-auto d-flex justify-content-between align-items-center">
+            <small class="text-muted">
+              <i class="bi bi-clock me-1"></i> Due {{ job.deadline|date:"M d, Y" }}
+            </small>
+            <a href="{% url 'jobs:detail' job.id %}" class="btn btn-sm btn-primary">
+              View &amp; Apply
+            </a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="empty-state">
+          <i class="bi bi-briefcase empty-state-icon"></i>
+          <h5>No job opportunities found</h5>
+          <p class="text-muted small">No jobs match your search or eligibility criteria at this moment.</p>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <nav class="d-flex justify-content-center">
+      <ul class="pagination pagination-sm">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_job_type %}&job_type={{ selected_job_type }}{% endif %}">&laquo;</a></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_job_type %}&job_type={{ selected_job_type }}{% endif %}">{{ num }}</a>
+          </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if selected_job_type %}&job_type={{ selected_job_type }}{% endif %}">&raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

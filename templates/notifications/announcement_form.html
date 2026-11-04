@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Campus Placement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card card-custom">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0"><i class="bi bi-megaphone-fill text-primary me-2"></i> {{ title }}</h5>
+          <a href="{% url 'notifications:announcements' %}" class="btn btn-sm btn-outline-secondary">Cancel</a>
+        </div>
+        <div class="card-body p-4">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Announcement Subject / Headline *</label>
+              {{ form.title }}
+              {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Category Classification *</label>
+                {{ form.category }}
+                {% if form.category.errors %}<div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6 d-flex align-items-center pt-3">
+                <div class="form-check form-switch mt-2">
+                  {{ form.is_pinned }}
+                  <label class="form-check-label fw-semibold small" for="{{ form.is_pinned.id_for_label }}">
+                    Pin to Top of Portal and Dashboards
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold small">Complete Notice Body *</label>
+              {{ form.content }}
+              {% if form.content.errors %}<div class="text-danger small mt-1">{{ form.content.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 border-top pt-3">
+              <a href="{% url 'notifications:announcements' %}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary px-4 fw-semibold">Publish Announcement</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

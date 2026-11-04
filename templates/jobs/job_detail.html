@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ job.title }} at {{ job.company.name }} - Campus Placement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Back button & Officer Controls -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <a href="{% url 'jobs:list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to Jobs
+    </a>
+    {% if user.is_officer %}
+      <div class="d-flex gap-2">
+        <a href="{% url 'jobs:update' job.id %}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-pencil me-1"></i> Edit Job
+        </a>
+        <form method="post" action="{% url 'jobs:toggle_status' job.id %}" class="d-flex align-items-center gap-1">
+          {% csrf_token %}
+          <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+            <option value="draft" {% if job.status == 'draft' %}selected{% endif %}>Draft</option>
+            <option value="published" {% if job.status == 'published' %}selected{% endif %}>Published</option>
+            <option value="closed" {% if job.status == 'closed' %}selected{% endif %}>Closed</option>
+            <option value="archived" {% if job.status == 'archived' %}selected{% endif %}>Archived</option>
+          </select>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="row g-4">
+    <!-- Main Job Description -->
+    <div class="col-lg-8">
+      <div class="card card-custom p-4 mb-4">
+        <!-- Job Title and Header -->
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h3 class="fw-bold mb-1 text-dark">{{ job.title }}</h3>
+            <div class="fs-5 text-primary fw-semibold mb-2">
+              <a href="{% url 'companies:detail' job.company.id %}" class="text-decoration-none">{{ job.company.name }}</a>
+            </div>
+          </div>
+          <span class="badge {% if job.status == 'published' %}bg-success{% elif job.status == 'draft' %}bg-secondary{% else %}bg-danger{% endif %} fs-6 px-3 py-2">
+            {{ job.get_status_display }}
+          </span>
+        </div>
+
+        <!-- Meta Pills -->
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          <span class="badge bg-light text-dark border p-2"><i class="bi bi-geo-alt me-1 text-primary"></i> {{ job.location }}</span>
+          <span class="badge bg-light text-dark border p-2"><i class="bi bi-briefcase me-1 text-primary"></i> {{ job.job_type }}</span>
+          <span class="badge bg-light text-dark border p-2"><i class="bi bi-currency-rupee me-1 text-success"></i> CTC: {{ job.salary_package }}</span>
+          <span class="badge bg-light text-dark border p-2"><i class="bi bi-calendar-check me-1 text-danger"></i> Deadline: {{ job.deadline|date:"M d, Y" }}</span>
+        </div>
+
+        <!-- Student Eligibility Evaluation Panel -->
+        {% if user.is_student %}
+          <div class="mb-4">
+            {% if user_application %}
+              <div class="alert alert-info d-flex align-items-center justify-content-between shadow-xs mb-0">
+                <div>
+                  <i class="bi bi-info-circle-fill fs-5 me-2"></i>
+                  <strong>You have applied for this position</strong> on {{ user_application.applied_at|date:"M d, Y" }}.
+                  <div class="small mt-1">Current Status: <span class="badge {{ user_application.badge_class }}">{{ user_application.status }}</span></div>
+                </div>
+                <a href="{% url 'applications:detail' user_application.id %}" class="btn btn-outline-primary btn-sm">View Application</a>
+              </div>
+            {% elif is_eligible %}
+              <div class="eligibility-box-eligible">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="bi bi-check-circle-fill fs-4 me-2"></i>
+                  <h6 class="fw-bold mb-0">You Are Eligible to Apply</h6>
+                </div>
+                <p class="small mb-3">Your student profile meets all the mandatory criteria configured for this position by the recruitment team.</p>
+                {% if job.is_active_for_applications %}
+                  <a href="{% url 'applications:apply' job.id %}" class="btn btn-success fw-bold px-4">
+                    <i class="bi bi-send-fill me-1"></i> Apply Now with Profile Resume
+                  </a>
+                {% else %}
+                  <span class="badge bg-secondary p-2">Applications Currently Closed or Outside Dates</span>
+                {% endif %}
+              </div>
+            {% else %}
+              <div class="eligibility-box-ineligible">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="bi bi-x-circle-fill fs-4 me-2"></i>
+                  <h6 class="fw-bold mb-0">You Do Not Meet the Eligibility Criteria</h6>
+                </div>
+                <p class="small mb-2">The system verified your profile against this opening and identified the following mismatch(es):</p>
+                <ul class="small mb-0 ps-3">
+                  {% for reason in eligibility_reasons %}
+                    <li>{{ reason }}</li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+
+        <!-- Job Description Body -->
+        <h5 class="fw-bold mb-2">Role Overview & Responsibilities</h5>
+        <div class="text-secondary mb-4" style="line-height: 1.7; white-space: pre-line;">
+          {{ job.description }}
+        </div>
+
+        <!-- Required Skills -->
+        <h5 class="fw-bold mb-2">Required Technical Skills</h5>
+        <div class="d-flex flex-wrap gap-2 mb-4">
+          {% for skill in job.skills_list %}
+            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary px-3 py-2 rounded-pill">{{ skill }}</span>
+          {% empty %}
+            <span class="text-muted small">None specified</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Placement Officer View: Applicants for this Job -->
+      {% if user.is_officer %}
+        <div class="card card-custom">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i> Candidates Applied ({{ applications.count }})</h5>
+            <a href="{% url 'applications:officer_applications' %}?job={{ job.id }}" class="btn btn-sm btn-outline-primary">Manage Applicants</a>
+          </div>
+          <div class="card-body p-0">
+            {% if applications %}
+              <div class="table-responsive">
+                <table class="table table-custom mb-0">
+                  <thead>
+                    <tr>
+                      <th>Candidate</th>
+                      <th>Dept & CGPA</th>
+                      <th>Status</th>
+                      <th>Applied Date</th>
+                      <th>Review</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for app in applications %}
+                      <tr>
+                        <td>
+                          <div class="fw-bold text-dark">{{ app.student.user.get_full_name }}</div>
+                          <small class="text-muted">{{ app.student.registration_number }}</small>
+                        </td>
+                        <td>
+                          <div>{{ app.student.department|truncatechars:24 }}</div>
+                          <small class="text-muted">CGPA: {{ app.student.cgpa }} &bull; Backlogs: {{ app.student.backlog_count }}</small>
+                        </td>
+                        <td><span class="badge {{ app.badge_class }}">{{ app.status }}</span></td>
+                        <td><small class="text-muted">{{ app.applied_at|date:"M d, Y" }}</small></td>
+                        <td>
+                          <a href="{% url 'applications:detail' app.id %}" class="btn btn-sm btn-outline-secondary">Review</a>
+                        </td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-center py-4 text-muted small">No applications received yet for this job drive.</div>
+            {% endif %}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Eligibility & Dates Sidebar Card -->
+    <div class="col-lg-4">
+      <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-sliders text-primary me-2"></i> Eligibility Criteria</h5>
+        
+        <ul class="list-group list-group-flush small">
+          <li class="list-group-item d-flex justify-content-between px-0 py-2">
+            <span class="text-muted">Minimum CGPA:</span>
+            <span class="fw-bold text-dark">{{ job.min_cgpa }} / 10.0</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 py-2">
+            <span class="text-muted">Max Allowed Backlogs:</span>
+            <span class="fw-bold text-dark">{{ job.max_backlogs }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 py-2">
+            <span class="text-muted">Eligible Semesters:</span>
+            <span class="fw-bold text-dark">{{ job.eligible_semesters }}</span>
+          </li>
+          <li class="list-group-item px-0 py-2">
+            <div class="text-muted mb-1">Eligible Branches / Departments:</div>
+            <div class="fw-semibold text-dark">{{ job.eligible_departments }}</div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Application Window -->
+      <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-calendar3 text-primary me-2"></i> Timeline & Schedule</h5>
+        <div class="small">
+          <div class="mb-2">
+            <span class="text-muted d-block">Application Opens:</span>
+            <span class="fw-semibold text-dark">{{ job.opening_date|date:"F d, Y" }}</span>
+          </div>
+          <div class="mb-2">
+            <span class="text-muted d-block">Application Deadline:</span>
+            <span class="fw-bold text-danger">{{ job.deadline|date:"F d, Y" }}</span>
+          </div>
+          <div>
+            <span class="text-muted d-block">Active Status:</span>
+            {% if job.is_active_for_applications %}
+              <span class="badge bg-success">Accepting Applications</span>
+            {% else %}
+              <span class="badge bg-secondary">Closed for Applications</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Company Snippet -->
+      <div class="card card-custom p-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-building text-primary me-2"></i> Hiring Partner</h5>
+        <h6 class="fw-bold text-dark mb-1">{{ job.company.name }}</h6>
+        <div class="text-muted small mb-2">{{ job.company.industry }}</div>
+        <p class="text-muted small mb-3">{{ job.company.description|truncatewords:20 }}</p>
+        <a href="{% url 'companies:detail' job.company.id %}" class="btn btn-outline-primary btn-sm w-100">
+          View Company Profile
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

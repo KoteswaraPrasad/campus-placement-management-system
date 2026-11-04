@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Application #{{ application.id }} - {{ application.job.title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Back Button & Status Badge -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      {% if user.is_officer %}
+        <a href="{% url 'applications:officer_applications' %}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i> Back to Application Management
+        </a>
+      {% else %}
+        <a href="{% url 'applications:student_applications' %}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i> Back to My Applications
+        </a>
+      {% endif %}
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="text-muted small">Current Decision:</span>
+      <span class="badge {{ application.badge_class }} fs-6 px-3 py-2">{{ application.status }}</span>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column: Application Details & Timeline -->
+    <div class="col-lg-8">
+      <!-- Header Summary Card -->
+      <div class="card card-custom p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <div>
+            <h4 class="fw-bold mb-1 text-dark">{{ application.job.title }}</h4>
+            <div class="fs-5 text-primary fw-semibold mb-2">
+              <a href="{% url 'companies:detail' application.job.company.id %}" class="text-decoration-none">{{ application.job.company.name }}</a>
+            </div>
+          </div>
+          <span class="badge bg-light text-dark border">{{ application.job.job_type }}</span>
+        </div>
+
+        <div class="d-flex flex-wrap gap-3 small text-muted mb-3">
+          <span><i class="bi bi-geo-alt"></i> {{ application.job.location }}</span>
+          <span>&bull;</span>
+          <span><i class="bi bi-currency-rupee text-success"></i> <strong>{{ application.job.salary_package }}</strong></span>
+          <span>&bull;</span>
+          <span><i class="bi bi-clock"></i> Applied on: <strong>{{ application.applied_at|date:"M d, Y h:i A" }}</strong></span>
+        </div>
+
+        {% if application.cover_note %}
+          <div class="p-3 bg-light rounded-3 border mt-2">
+            <h6 class="fw-bold text-dark small text-uppercase mb-1">Candidate Statement / Cover Note:</h6>
+            <p class="text-secondary small mb-0">{{ application.cover_note }}</p>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Application Status History Timeline -->
+      <div class="card card-custom mb-4">
+        <div class="card-header bg-white">
+          <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i> Application Status History & Audit Log</h5>
+        </div>
+        <div class="card-body p-4">
+          {% if history %}
+            <div class="position-relative ps-4" style="border-left: 2px solid #e2e8f0;">
+              {% for h in history %}
+                <div class="position-relative mb-4">
+                  <!-- Timeline indicator dot -->
+                  <div class="position-absolute rounded-circle bg-primary" style="width: 12px; height: 12px; left: -31px; top: 4px; border: 2px solid #ffffff;"></div>
+                  
+                  <div class="d-flex justify-content-between align-items-baseline mb-1">
+                    <span class="fw-bold text-dark">
+                      Status changed to <span class="badge bg-light text-primary border">{{ h.new_status }}</span>
+                    </span>
+                    <small class="text-muted">{{ h.changed_at|date:"M d, Y h:i A" }}</small>
+                  </div>
+                  
+                  {% if h.notes %}
+                    <p class="small text-secondary mb-1 bg-light p-2 rounded border">{{ h.notes }}</p>
+                  {% endif %}
+                  
+                  <small class="text-muted">
+                    Updated by: <strong>{{ h.changed_by.get_full_name|default:h.changed_by.username|default:"System" }}</strong>
+                  </small>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-muted small mb-0">No historical status logs available.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Candidate Profile & Officer Actions -->
+    <div class="col-lg-4">
+      <!-- Candidate Dossier Card -->
+      <div class="card card-custom p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-person-badge text-primary me-2"></i> Candidate Dossier</h5>
+        
+        <div class="text-center pb-3 border-bottom mb-3">
+          <div class="bg-primary text-white rounded-circle mx-auto d-flex align-items-center justify-content-center fw-bold fs-4 mb-2" style="width: 56px; height: 56px;">
+            {{ application.student.user.first_name|first|upper }}
+          </div>
+          <h6 class="fw-bold mb-0">{{ application.student.user.get_full_name }}</h6>
+          <small class="text-muted font-monospace">{{ application.student.registration_number }}</small>
+        </div>
+
+        <ul class="list-group list-group-flush small mb-3">
+          <li class="list-group-item d-flex justify-content-between px-0 py-2">
+            <span class="text-muted">Department:</span>
+            <span class="fw-semibold text-dark">{{ application.student.department }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 py-2">
+            <span class="text-muted">Current Semester:</span>
+            <span class="fw-semibold text-dark">Semester {{ application.student.current_semester }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 py-2">
+            <span class="text-muted">CGPA:</span>
+            <span class="fw-bold text-primary">{{ application.student.cgpa }} / 10.0</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 py-2">
+            <span class="text-muted">Active Backlogs:</span>
+            <span class="fw-bold {% if application.student.backlog_count > 0 %}text-danger{% else %}text-success{% endif %}">
+              {{ application.student.backlog_count }}
+            </span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 py-2">
+            <span class="text-muted">Email:</span>
+            <span class="fw-semibold text-dark text-truncate" style="max-width: 170px;">{{ application.student.user.email }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between px-0 py-2">
+            <span class="text-muted">Phone:</span>
+            <span class="fw-semibold text-dark">{{ application.student.phone_number }}</span>
+          </li>
+        </ul>
+
+        <div class="pt-2">
+          {% if application.student.resume %}
+            <a href="{% url 'students:download_resume' application.student.id %}" target="_blank" class="btn btn-outline-primary w-100 fw-semibold btn-sm">
+              <i class="bi bi-file-earmark-pdf me-1"></i> Download Candidate Resume
+            </a>
+          {% else %}
+            <span class="text-muted small">No resume file attached.</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Officer Status Update Action Card -->
+      {% if user.is_officer %}
+        <div class="card card-custom p-4 border-primary">
+          <h5 class="fw-bold mb-3 text-primary"><i class="bi bi-shield-check me-2"></i> Update Application Status</h5>
+          <form method="post" action="{% url 'applications:officer_update_status' application.id %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">New Status Transition</label>
+              {{ status_form.status }}
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Officer Remarks / Interview Instructions</label>
+              {{ status_form.notes }}
+              <div class="form-text small">This note is recorded in the timeline and sent in-app to the student.</div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 fw-bold">
+              <i class="bi bi-check2-circle me-1"></i> Update Status
+            </button>
+          </form>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

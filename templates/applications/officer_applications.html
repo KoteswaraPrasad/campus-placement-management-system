@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Candidate Applications - Placement Office{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1">Candidate Applications Central</h2>
+      <p class="text-muted mb-0">Screen, shortlist, schedule interviews, and finalize job offers across all drives (Total: {{ total_count }}).</p>
+    </div>
+    <a href="{% url 'dashboard:export_applications' %}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-file-earmark-arrow-down me-1"></i> Export Applications CSV
+    </a>
+  </div>
+
+  <!-- Filters & Search -->
+  <div class="card card-custom mb-4">
+    <div class="card-body p-3">
+      <form method="get" class="row g-2 align-items-center">
+        <div class="col-md-3">
+          <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="Search student, reg no, role...">
+        </div>
+        <div class="col-md-2">
+          <select name="status" class="form-select">
+            <option value="">All Statuses</option>
+            {% for code, label in statuses %}
+              <option value="{{ code }}" {% if status_filter == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select name="job" class="form-select">
+            <option value="">All Jobs</option>
+            {% for j in jobs %}
+              <option value="{{ j.id }}" {% if job_filter == j.id|stringformat:"s" %}selected{% endif %}>{{ j.title }} ({{ j.company.name }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select name="company" class="form-select">
+            <option value="">All Companies</option>
+            {% for c in companies %}
+              <option value="{{ c.id }}" {% if company_filter == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select name="dept" class="form-select">
+            <option value="">All Departments</option>
+            {% for code, label in departments %}
+              <option value="{{ code }}" {% if dept_filter == code %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-primary w-100" title="Filter"><i class="bi bi-funnel"></i></button>
+          <a href="{% url 'applications:officer_applications' %}" class="btn btn-outline-secondary" title="Reset"><i class="bi bi-arrow-counterclockwise"></i></a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Applications Table -->
+  <div class="card card-custom mb-4">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-custom mb-0">
+          <thead>
+            <tr>
+              <th>Candidate</th>
+              <th>Dept & CGPA</th>
+              <th>Position & Company</th>
+              <th>CTC</th>
+              <th>Status</th>
+              <th>Applied Date</th>
+              <th>Resume</th>
+              <th class="text-end">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for app in page_obj %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ app.student.user.get_full_name }}</div>
+                  <small class="text-muted font-monospace">{{ app.student.registration_number }}</small>
+                </td>
+                <td>
+                  <div><small class="fw-semibold">{{ app.student.department|truncatechars:22 }}</small></div>
+                  <small class="text-muted">CGPA: <strong>{{ app.student.cgpa }}</strong> &bull; Backlogs: {{ app.student.backlog_count }}</small>
+                </td>
+                <td>
+                  <div class="fw-bold text-dark">{{ app.job.title }}</div>
+                  <small class="text-primary">{{ app.job.company.name }}</small>
+                </td>
+                <td><span class="badge bg-light text-dark border">{{ app.job.salary_package }}</span></td>
+                <td>
+                  <span class="badge {{ app.badge_class }}">{{ app.status }}</span>
+                </td>
+                <td><small class="text-muted">{{ app.applied_at|date:"M d, Y" }}</small></td>
+                <td>
+                  {% if app.student.resume %}
+                    <a href="{% url 'students:download_resume' app.student.id %}" target="_blank" class="btn btn-sm btn-outline-primary py-0 px-2" title="View Candidate Resume">
+                      <i class="bi bi-file-earmark-pdf"></i>
+                    </a>
+                  {% else %}
+                    <span class="text-muted small">None</span>
+                  {% endif %}
+                </td>
+                <td class="text-end">
+                  <a href="{% url 'applications:detail' app.id %}" class="btn btn-sm btn-outline-secondary">
+                    Review / Decision
+                  </a>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="8" class="text-center py-5 text-muted">
+                  <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary"></i>
+                  No applications match the current filter criteria.
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  {% if page_obj.has_other_pages %}
+    <nav class="d-flex justify-content-center">
+      <ul class="pagination pagination-sm">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if job_filter %}&job={{ job_filter }}{% endif %}{% if company_filter %}&company={{ company_filter }}{% endif %}{% if dept_filter %}&dept={{ dept_filter }}{% endif %}">&laquo;</a></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if job_filter %}&job={{ job_filter }}{% endif %}{% if company_filter %}&company={{ company_filter }}{% endif %}{% if dept_filter %}&dept={{ dept_filter }}{% endif %}">{{ num }}</a>
+          </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if job_filter %}&job={{ job_filter }}{% endif %}{% if company_filter %}&company={{ company_filter }}{% endif %}{% if dept_filter %}&dept={{ dept_filter }}{% endif %}">&raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+</div>
+{% endblock %}

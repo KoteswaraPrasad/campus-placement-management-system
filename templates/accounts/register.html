@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Student Registration - Campus Placement Management System{% endblock %}
+
+{% block public_content %}
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card card-custom border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="p-4 bg-primary text-white text-center">
+          <i class="bi bi-person-plus-fill fs-2 mb-2 d-inline-block"></i>
+          <h3 class="fw-bold mb-1">Student Placement Registration</h3>
+          <p class="small text-white-50 mb-0">Create your university placement account and profile to apply for corporate drives</p>
+        </div>
+
+        <div class="card-body p-4 p-md-5">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}
+                  <div>{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+
+            <!-- Account Details -->
+            <h6 class="fw-bold text-primary mb-3 text-uppercase small letter-spacing-1">
+              <i class="bi bi-person-badge me-2"></i> 1. Account Credentials
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">First Name *</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Last Name *</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Username *</label>
+                {{ form.username }}
+                {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Email Address *</label>
+                {{ form.email }}
+                {% if form.email.errors %}<div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Password *</label>
+                {{ form.password }}
+                {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Confirm Password *</label>
+                {{ form.password_confirm }}
+                {% if form.password_confirm.errors %}<div class="text-danger small mt-1">{{ form.password_confirm.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <!-- Academic Profile Details -->
+            <h6 class="fw-bold text-primary mb-3 text-uppercase small letter-spacing-1">
+              <i class="bi bi-mortarboard me-2"></i> 2. Academic & Personal Records
+            </h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">University Registration Number *</label>
+                {{ form.registration_number }}
+                <div class="form-text small">e.g., 2022CSE042 (Unique University ID)</div>
+                {% if form.registration_number.errors %}<div class="text-danger small mt-1">{{ form.registration_number.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Mobile Phone Number *</label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}<div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Academic Department / Branch *</label>
+                {{ form.department }}
+                {% if form.department.errors %}<div class="text-danger small mt-1">{{ form.department.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Current Semester *</label>
+                {{ form.current_semester }}
+                {% if form.current_semester.errors %}<div class="text-danger small mt-1">{{ form.current_semester.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Cumulative CGPA (0.00 - 10.00) *</label>
+                {{ form.cgpa }}
+                {% if form.cgpa.errors %}<div class="text-danger small mt-1">{{ form.cgpa.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Active Backlogs Count *</label>
+                {{ form.backlog_count }}
+                {% if form.backlog_count.errors %}<div class="text-danger small mt-1">{{ form.backlog_count.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <!-- Skills & Resume Details -->
+            <h6 class="fw-bold text-primary mb-3 text-uppercase small letter-spacing-1">
+              <i class="bi bi-file-earmark-person me-2"></i> 3. Professional Skills & Resume
+            </h6>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Technical Skills *</label>
+              {{ form.skills }}
+              <div class="form-text small">Separate with commas (e.g., Python, Django, SQL, React, AWS, Git)</div>
+              {% if form.skills.errors %}<div class="text-danger small mt-1">{{ form.skills.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold small">Upload Resume (PDF, DOC, DOCX - Max 5MB) *</label>
+              {{ form.resume }}
+              <div class="form-text small">Ensure your resume contains up-to-date contact details and project experiences.</div>
+              {% if form.resume.errors %}<div class="text-danger small mt-1">{{ form.resume.errors.0 }}</div>{% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold">
+              <i class="bi bi-check2-circle me-1"></i> Register & Enter Portal
+            </button>
+          </form>
+
+          <div class="mt-4 pt-3 border-top text-center text-muted small">
+            Already registered? <a href="{% url 'accounts:login' %}" class="fw-semibold text-primary">Log in here</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

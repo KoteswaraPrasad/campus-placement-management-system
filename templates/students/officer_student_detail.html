@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Candidate Dossier - {{ student.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Back button -->
+  <div class="mb-3">
+    <a href="{% url 'students:officer_student_list' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left me-1"></i> Back to Student Directory
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Student Profile Card -->
+    <div class="col-lg-4">
+      <div class="card card-custom p-4 text-center">
+        <div class="mx-auto mb-3 bg-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 80px; height: 80px; font-size: 2rem; font-weight: 700;">
+          {{ student.user.first_name|first|upper }}
+        </div>
+        <h4 class="fw-bold mb-1">{{ student.user.get_full_name }}</h4>
+        <div class="text-muted small mb-2">{{ student.registration_number }}</div>
+
+        <div class="mb-3">
+          {% if student.is_placed %}
+            <span class="badge bg-success px-3 py-2 rounded-pill"><i class="bi bi-check-circle me-1"></i> Placed Student</span>
+          {% else %}
+            <span class="badge bg-secondary px-3 py-2 rounded-pill">Unplaced Candidate</span>
+          {% endif %}
+        </div>
+
+        <div class="border-top pt-3 text-start small">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Email:</span>
+            <span class="fw-semibold text-break">{{ student.user.email }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Phone:</span>
+            <span class="fw-semibold">{{ student.phone_number }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Department:</span>
+            <span class="fw-semibold">{{ student.department }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Semester:</span>
+            <span class="fw-semibold">Semester {{ student.current_semester }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">CGPA:</span>
+            <span class="fw-bold text-primary">{{ student.cgpa }}</span>
+          </div>
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Active Backlogs:</span>
+            <span class="fw-bold {% if student.backlog_count > 0 %}text-danger{% else %}text-success{% endif %}">{{ student.backlog_count }}</span>
+          </div>
+        </div>
+
+        <div class="border-top pt-3 mt-3">
+          {% if student.resume %}
+            <a href="{% url 'students:download_resume' student.id %}" target="_blank" class="btn btn-outline-primary w-100 fw-semibold">
+              <i class="bi bi-file-earmark-pdf me-1"></i> View / Download Resume
+            </a>
+          {% else %}
+            <span class="text-muted small">No resume uploaded by candidate.</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side: Skills & Applied Positions -->
+    <div class="col-lg-8">
+      <!-- Skills Card -->
+      <div class="card card-custom mb-4">
+        <div class="card-header bg-white">
+          <h5 class="fw-bold mb-0"><i class="bi bi-code-slash text-primary me-2"></i> Technical Skill Set</h5>
+        </div>
+        <div class="card-body">
+          <div class="d-flex flex-wrap gap-2">
+            {% for skill in student.skills_list %}
+              <span class="badge bg-light text-dark border px-3 py-2 rounded-pill">{{ skill }}</span>
+            {% empty %}
+              <span class="text-muted small">No technical skills recorded.</span>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Applications History Table -->
+      <div class="card card-custom">
+        <div class="card-header bg-white">
+          <h5 class="fw-bold mb-0"><i class="bi bi-journal-text text-primary me-2"></i> Application & Drive History</h5>
+        </div>
+        <div class="card-body p-0">
+          {% if applications %}
+            <div class="table-responsive">
+              <table class="table table-custom mb-0">
+                <thead>
+                  <tr>
+                    <th>Job Title & Company</th>
+                    <th>Salary (CTC)</th>
+                    <th>Status</th>
+                    <th>Applied Date</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for app in applications %}
+                    <tr>
+                      <td>
+                        <div class="fw-bold text-dark">{{ app.job.title }}</div>
+                        <small class="text-muted">{{ app.job.company.name }}</small>
+                      </td>
+                      <td><span class="badge bg-light text-dark border">{{ app.job.salary_package }}</span></td>
+                      <td><span class="badge {{ app.badge_class }}">{{ app.status }}</span></td>
+                      <td><small class="text-muted">{{ app.applied_at|date:"M d, Y" }}</small></td>
+                      <td>
+                        <a href="{% url 'applications:detail' app.id %}" class="btn btn-sm btn-outline-primary">
+                          Review Application
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted small">
+              This candidate has not applied to any job drives yet.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Placement Officer Dashboard - Campus Placement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Header with Quick Action Buttons -->
+  <div class="row mb-4 align-items-center">
+    <div class="col-md-7">
+      <h2 class="fw-bold mb-1">Placement Administration Dashboard</h2>
+      <p class="text-muted mb-0">Overview of institutional placement metrics, student applications, and recruitment drives.</p>
+    </div>
+    <div class="col-md-5 text-md-end mt-3 mt-md-0 d-flex flex-wrap gap-2 justify-content-md-end">
+      <a href="{% url 'jobs:create' %}" class="btn btn-primary btn-sm px-3 shadow-sm">
+        <i class="bi bi-plus-circle me-1"></i> Post New Job
+      </a>
+      <a href="{% url 'companies:create' %}" class="btn btn-outline-primary btn-sm px-3">
+        <i class="bi bi-building-add me-1"></i> Add Company
+      </a>
+      <a href="{% url 'notifications:announcement_create' %}" class="btn btn-outline-secondary btn-sm px-3">
+        <i class="bi bi-megaphone me-1"></i> Announce
+      </a>
+    </div>
+  </div>
+
+  <!-- Metric Summary Cards -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2">
+      <div class="metric-card">
+        <div class="metric-label">Registered Students</div>
+        <div class="metric-value text-primary">{{ total_students }}</div>
+        <small class="text-muted"><a href="{% url 'students:officer_student_list' %}" class="text-decoration-none">View directory &rarr;</a></small>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+      <div class="metric-card">
+        <div class="metric-label">Partner Companies</div>
+        <div class="metric-value text-dark">{{ total_companies }}</div>
+        <small class="text-success">{{ active_companies }} active</small>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+      <div class="metric-card">
+        <div class="metric-label">Active Job Drives</div>
+        <div class="metric-value text-info">{{ active_jobs }}</div>
+        <small class="text-muted"><a href="{% url 'jobs:list' %}" class="text-decoration-none">Manage jobs &rarr;</a></small>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+      <div class="metric-card">
+        <div class="metric-label">Total Applications</div>
+        <div class="metric-value text-secondary">{{ total_applications }}</div>
+        <small class="text-muted"><a href="{% url 'applications:officer_applications' %}" class="text-decoration-none">Review all &rarr;</a></small>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+      <div class="metric-card">
+        <div class="metric-label">Students Placed</div>
+        <div class="metric-value text-success">{{ placed_students_count }}</div>
+        <small class="text-muted">Unique candidates</small>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-2">
+      <div class="metric-card bg-primary text-white border-primary">
+        <div class="metric-label text-white-50">Placement Rate</div>
+        <div class="metric-value text-white">{{ placement_rate }}%</div>
+        <small class="text-white-50">Placed / Total</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js Visualizations Section -->
+  <div class="row g-4 mb-4">
+    <!-- Applications by Status -->
+    <div class="col-lg-4">
+      <div class="card card-custom h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-pie-chart-fill me-2 text-primary"></i> Applications by Status</span>
+        </div>
+        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+          <div style="width: 100%; max-width: 280px; height: 260px;">
+            <canvas id="statusChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Placed Students by Department -->
+    <div class="col-lg-4">
+      <div class="card card-custom h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-bar-chart-line-fill me-2 text-success"></i> Placed by Department</span>
+        </div>
+        <div class="card-body">
+          <div style="height: 260px;">
+            <canvas id="deptChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Openings by Company -->
+    <div class="col-lg-4">
+      <div class="card card-custom h-100">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-buildings-fill me-2 text-info"></i> Openings by Company</span>
+        </div>
+        <div class="card-body">
+          <div style="height: 260px;">
+            <canvas id="companyChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Data Tables Section -->
+  <div class="row g-4">
+    <!-- Recent Applications -->
+    <div class="col-lg-7">
+      <div class="card card-custom mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-inboxes-fill me-2 text-primary"></i> Recent Candidate Applications</span>
+          <a href="{% url 'applications:officer_applications' %}" class="btn btn-sm btn-outline-primary">View All</a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_applications %}
+            <div class="table-responsive">
+              <table class="table table-custom mb-0">
+                <thead>
+                  <tr>
+                    <th>Candidate</th>
+                    <th>Role & Company</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for app in recent_applications %}
+                    <tr>
+                      <td>
+                        <div class="fw-bold text-dark">{{ app.student.user.get_full_name }}</div>
+                        <small class="text-muted">{{ app.student.registration_number }} &bull; {{ app.student.department|truncatechars:20 }}</small>
+                      </td>
+                      <td>
+                        <div class="fw-semibold text-dark">{{ app.job.title }}</div>
+                        <small class="text-muted">{{ app.job.company.name }}</small>
+                      </td>
+                      <td><span class="badge {{ app.badge_class }}">{{ app.status }}</span></td>
+                      <td>
+                        <a href="{% url 'applications:detail' app.id %}" class="btn btn-sm btn-outline-secondary">
+                          Review
+                        </a>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted small">No applications received yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Job Openings -->
+    <div class="col-lg-5">
+      <div class="card card-custom mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-briefcase-fill me-2 text-primary"></i> Active Job Openings</span>
+          <a href="{% url 'jobs:list' %}" class="btn btn-sm btn-outline-primary">Manage</a>
+        </div>
+        <div class="card-body p-0">
+          {% if recent_jobs %}
+            <div class="table-responsive">
+              <table class="table table-custom mb-0">
+                <thead>
+                  <tr>
+                    <th>Title & Company</th>
+                    <th>CTC</th>
+                    <th>Deadline</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for job in recent_jobs %}
+                    <tr>
+                      <td>
+                        <div class="fw-bold text-dark">{{ job.title }}</div>
+                        <small class="text-muted">{{ job.company.name }}</small>
+                      </td>
+                      <td><span class="badge bg-light text-dark border">{{ job.salary_package }}</span></td>
+                      <td><small class="text-muted">{{ job.deadline|date:"M d" }}</small></td>
+                      <td>
+                        <span class="badge {% if job.status == 'published' %}bg-success{% elif job.status == 'draft' %}bg-secondary{% else %}bg-danger{% endif %}">
+                          {{ job.status|title }}
+                        </span>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          {% else %}
+            <div class="text-center py-4 text-muted small">No job postings created yet.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Chart 1: Applications by Status
+  const statusLabels = JSON.parse('{{ status_chart_labels|safe }}');
+  const statusData = JSON.parse('{{ status_chart_data|safe }}');
+  const statusColors = ['#2563eb', '#06b6d4', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#64748b'];
+
+  const ctxStatus = document.getElementById('statusChart').getContext('2d');
+  new Chart(ctxStatus, {
+    type: 'doughnut',
+    data: {
+      labels: statusLabels,
+      datasets: [{
+        data: statusData,
+        backgroundColor: statusColors,
+        borderWidth: 2,
+        borderColor: '#ffffff'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { boxWidth: 12, font: { size: 10 } }
+        }
+      }
+    }
+  });
+
+  // Chart 2: Placed by Department
+  const deptLabels = JSON.parse('{{ dept_chart_labels|safe }}');
+  const deptData = JSON.parse('{{ dept_chart_data|safe }}');
+
+  // Shorten department labels for chart readability
+  const shortDeptLabels = deptLabels.map(d => {
+    if (d.includes('Computer Science')) return 'CSE';
+    if (d.includes('Information Technology')) return 'IT';
+    if (d.includes('Electronics and Communication')) return 'ECE';
+    if (d.includes('Electrical and Electronics')) return 'EEE';
+    if (d.includes('Mechanical')) return 'MECH';
+    if (d.includes('Civil')) return 'CIVIL';
+    if (d.includes('AI & Data')) return 'AI/DS';
+    return d;
+  });
+
+  const ctxDept = document.getElementById('deptChart').getContext('2d');
+  new Chart(ctxDept, {
+    type: 'bar',
+    data: {
+      labels: shortDeptLabels,
+      datasets: [{
+        label: 'Placed Students',
+        data: deptData,
+        backgroundColor: '#059669',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, precision: 0 }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+
+  // Chart 3: Openings by Company
+  const companyLabels = JSON.parse('{{ company_chart_labels|safe }}');
+  const companyData = JSON.parse('{{ company_chart_data|safe }}');
+
+  const ctxCompany = document.getElementById('companyChart').getContext('2d');
+  new Chart(ctxCompany, {
+    type: 'bar',
+    data: {
+      labels: companyLabels,
+      datasets: [{
+        label: 'Job Openings',
+        data: companyData,
+        backgroundColor: '#3b82f6',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, precision: 0 }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

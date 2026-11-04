@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Profile - Campus Placement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
+      <div class="card card-custom">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0"><i class="bi bi-pencil-square text-primary me-2"></i> Update Profile & Academic Information</h5>
+          <a href="{% url 'students:profile' %}" class="btn btn-sm btn-outline-secondary">Back to Profile</a>
+        </div>
+        <div class="card-body p-4">
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <h6 class="fw-bold text-primary mb-3 text-uppercase small letter-spacing-1">Personal Details</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">First Name</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}<div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Last Name</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}<div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Registered Email (Read-Only)</label>
+                {{ form.email }}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Contact Phone Number</label>
+                {{ form.phone_number }}
+                {% if form.phone_number.errors %}<div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <h6 class="fw-bold text-primary mb-3 text-uppercase small letter-spacing-1">Academic Records</h6>
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Department / Major</label>
+                {{ form.department }}
+                {% if form.department.errors %}<div class="text-danger small mt-1">{{ form.department.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Current Semester</label>
+                {{ form.current_semester }}
+                {% if form.current_semester.errors %}<div class="text-danger small mt-1">{{ form.current_semester.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Cumulative CGPA (0.00 - 10.00)</label>
+                {{ form.cgpa }}
+                {% if form.cgpa.errors %}<div class="text-danger small mt-1">{{ form.cgpa.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Active Backlogs Count</label>
+                {{ form.backlog_count }}
+                {% if form.backlog_count.errors %}<div class="text-danger small mt-1">{{ form.backlog_count.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <h6 class="fw-bold text-primary mb-3 text-uppercase small letter-spacing-1">Professional Qualifications</h6>
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Technical Skills (Comma-separated)</label>
+              {{ form.skills }}
+              {% if form.skills.errors %}<div class="text-danger small mt-1">{{ form.skills.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold small">Resume File</label>
+              {% if profile.resume %}
+                <div class="mb-2 text-muted small">Current file: <strong>{{ profile.resume.name|cut:'resumes/' }}</strong></div>
+              {% endif %}
+              {{ form.resume }}
+              <div class="form-text small">{{ form.resume.help_text }}</div>
+              {% if form.resume.errors %}<div class="text-danger small mt-1">{{ form.resume.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 border-top pt-3">
+              <a href="{% url 'students:profile' %}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary px-4 fw-semibold">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

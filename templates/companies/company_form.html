@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Campus Placement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card card-custom">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+          <h5 class="fw-bold mb-0"><i class="bi bi-building text-primary me-2"></i> {{ title }}</h5>
+          <a href="{% url 'companies:list' %}" class="btn btn-sm btn-outline-secondary">Cancel</a>
+        </div>
+        <div class="card-body p-4">
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-7">
+                <label class="form-label fw-semibold small">Company Legal / Brand Name *</label>
+                {{ form.name }}
+                {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-5">
+                <label class="form-label fw-semibold small">Industry Sector *</label>
+                {{ form.industry }}
+                {% if form.industry.errors %}<div class="text-danger small mt-1">{{ form.industry.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">Organization Description & Profile *</label>
+              {{ form.description }}
+              {% if form.description.errors %}<div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Official Website</label>
+                {{ form.website }}
+                {% if form.website.errors %}<div class="text-danger small mt-1">{{ form.website.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small">Office / Job Locations</label>
+                {{ form.locations }}
+                <div class="form-text small">{{ form.locations.help_text }}</div>
+                {% if form.locations.errors %}<div class="text-danger small mt-1">{{ form.locations.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <h6 class="fw-bold text-primary mb-3 mt-4 text-uppercase small letter-spacing-1">Corporate Contact Person</h6>
+            <div class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label class="form-label fw-semibold small">Contact Person Name *</label>
+                {{ form.contact_person }}
+                {% if form.contact_person.errors %}<div class="text-danger small mt-1">{{ form.contact_person.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold small">Contact Email *</label>
+                {{ form.contact_email }}
+                {% if form.contact_email.errors %}<div class="text-danger small mt-1">{{ form.contact_email.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold small">Phone Number</label>
+                {{ form.contact_phone }}
+                {% if form.contact_phone.errors %}<div class="text-danger small mt-1">{{ form.contact_phone.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <div class="form-check form-switch mb-4 mt-3">
+              {{ form.is_active }}
+              <label class="form-check-label fw-semibold small" for="{{ form.is_active.id_for_label }}">
+                Active Partnership Status (Permit job postings and campus interaction)
+              </label>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 border-top pt-3">
+              <a href="{% url 'companies:list' %}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary px-4 fw-semibold">Save Company Record</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

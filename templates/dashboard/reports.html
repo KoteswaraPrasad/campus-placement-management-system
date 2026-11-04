@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Placement Reports & Analytics - Campus Placement{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+      <h2 class="fw-bold mb-1">Placement Reports & Statistical Summary</h2>
+      <p class="text-muted mb-0">Institutional placement metrics, department-wise breakdowns, and downloadable audit reports.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'dashboard:export_applications' %}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-file-earmark-arrow-down me-1"></i> Export Applications CSV
+      </a>
+      <a href="{% url 'dashboard:export_placed' %}" class="btn btn-outline-success btn-sm">
+        <i class="bi bi-award me-1"></i> Export Placed Students CSV
+      </a>
+      <a href="{% url 'dashboard:export_departments' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-table me-1"></i> Export Department Summary
+      </a>
+    </div>
+  </div>
+
+  <!-- Department Summary Table -->
+  <div class="card card-custom mb-4">
+    <div class="card-header bg-white">
+      <h5 class="fw-bold mb-0"><i class="bi bi-mortarboard-fill text-primary me-2"></i> Department-Wise Placement Performance</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-custom mb-0">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th class="text-center">Registered Students</th>
+              <th class="text-center">Students Placed</th>
+              <th class="text-center">Placement Rate</th>
+              <th class="text-end">Status Indicator</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in department_summary %}
+              <tr>
+                <td class="fw-bold text-dark">{{ item.department }}</td>
+                <td class="text-center">{{ item.total_students }}</td>
+                <td class="text-center text-success fw-bold">{{ item.placed_students }}</td>
+                <td class="text-center">
+                  <span class="badge {% if item.placement_rate >= 70 %}bg-success{% elif item.placement_rate >= 40 %}bg-warning text-dark{% else %}bg-secondary{% endif %} px-2 py-1">
+                    {{ item.placement_rate }}%
+                  </span>
+                </td>
+                <td class="text-end" style="width: 200px;">
+                  <div class="progress" style="height: 6px;">
+                    <div class="progress-bar {% if item.placement_rate >= 70 %}bg-success{% elif item.placement_rate >= 40 %}bg-warning{% else %}bg-secondary{% endif %}" role="progressbar" style="width: {{ item.placement_rate }}%;"></div>
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Company Recruiting Summary Table -->
+  <div class="card card-custom mb-4">
+    <div class="card-header bg-white">
+      <h5 class="fw-bold mb-0"><i class="bi bi-buildings-fill text-primary me-2"></i> Company Participation & Hiring Overview</h5>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-custom mb-0">
+          <thead>
+            <tr>
+              <th>Company Name</th>
+              <th>Industry</th>
+              <th class="text-center">Job Drives Posted</th>
+              <th class="text-center">Total Applications Received</th>
+              <th class="text-center">Selected Offers</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for company in company_summary %}
+              <tr>
+                <td class="fw-bold text-dark">{{ company.company }}</td>
+                <td><span class="badge bg-light text-secondary border">{{ company.industry }}</span></td>
+                <td class="text-center">{{ company.total_jobs }}</td>
+                <td class="text-center">{{ company.total_applications }}</td>
+                <td class="text-center fw-bold text-success">{{ company.total_hires }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">No company data recorded yet.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
